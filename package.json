@@ -1,0 +1,21 @@
+{
+  "name": "clipdrop",
+  "version": "1.0.0",
+  "description": "Interface gráfica moderna, limpa e descomplicada para yt-dlp e ffmpeg",
+  "main": "src/main/index.js",
+  "author": "ClipDrop Team",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  }
+}

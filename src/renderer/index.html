@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self'">
+  <meta name="description" content="ClipDrop - baixe músicas e vídeos de forma simples: cole o link, escolha o modo e baixe.">
+  <title>ClipDrop</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-view="splash">
+
+  <!-- Splash: checklist automático das dependências -->
+  <div id="splashScreen" class="splash-overlay"></div>
+
+  <div class="app-window">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </span>
+        <span class="brand-name">ClipDrop</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="view" id="homeView" aria-label="Início" hidden></section>
+      <section class="view" id="audioView" aria-label="Áudio e Música" hidden></section>
+      <section class="view" id="videoView" aria-label="Vídeo" hidden></section>
+
+      <section class="downloads-section" id="downloadsSection" aria-label="Transferências" hidden>
+        <h2 class="section-title">Transferências</h2>
+        <div class="downloads-list" id="downloadsList"></div>
+      </section>
+    </main>
+
+    <!-- Pasta de destino (visível apenas nas telas de modo) -->
+    <footer class="app-footer">
+      <span class="footer-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </span>
+      <span class="footer-label">Salvar em</span>
+      <span class="footer-path" id="currentFolderPath">…</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="changeFolderBtn">Alterar</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="openFolderBtn">Abrir pasta</button>
+    </footer>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/uiState.js"></script>
+  <script src="js/components/splashScreen.js"></script>
+  <script src="js/components/urlBar.js"></script>
+  <script src="js/components/playlistView.js"></script>
+  <script src="js/components/downloadList.js"></script>
+  <script src="js/components/modeView.js"></script>
+  <script src="js/components/homeView.js"></script>
+  <script src="js/components/audioView.js"></script>
+  <script src="js/components/videoView.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
