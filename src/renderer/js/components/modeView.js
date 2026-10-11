@@ -30,7 +30,7 @@ class ModeView {
 
   mount() {
     this.container.innerHTML = `
-      <button type="button" class="back-link" data-role="back">← Voltar ao início</button>
+      <button type="button" class="back-link" data-role="back"><span style="display:inline-block; vertical-align:middle; margin-right:4px;">${ICONS.back}</span> Voltar ao início</button>
       <header class="view-head">
         <span class="chip chip-solid">${escapeHtml(this.badge)}</span>
         <h1 class="view-title">${escapeHtml(this.title)}</h1>
@@ -130,7 +130,7 @@ class ModeView {
       <article class="single-card">
         <div class="single-thumb">
           ${media.thumbnail ? `<img src="${escapeHtml(media.thumbnail)}" alt="" />` : ''}
-          <span class="duration-pill">${escapeHtml(media.durationFormatted)}</span>
+          ${media.durationFormatted && media.durationFormatted !== '--:--' ? `<span class="duration-pill">${escapeHtml(media.durationFormatted)}</span>` : ''}
         </div>
         <div class="single-body">
           <h2 class="single-title">${escapeHtml(media.title)}</h2>
@@ -164,6 +164,12 @@ class ModeView {
 
   // ---- Download ----
   startDownload({ title, thumbnail, isPlaylist, selectedIndices }) {
+    const dlBtn = this.singleEl.querySelector('[data-role="download"]');
+    if (dlBtn) {
+      dlBtn.disabled = true;
+      setTimeout(() => { if (dlBtn) dlBtn.disabled = false; }, 2500);
+    }
+
     const state = uiState.getState();
     showToast('Download iniciado! Acompanhe o progresso abaixo.', 'info');
 
@@ -176,6 +182,8 @@ class ModeView {
         outputDir: state.destinationFolder,
         isPlaylist,
         selectedIndices,
+        title,
+        thumbnail,
         [this.mode]: structuredClone(uiState.getSettings(this.mode)),
         ...this.extraOptions()
       }

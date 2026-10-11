@@ -40,6 +40,14 @@ class DependencyManager {
         label: 'Analisador de mídia (ffprobe)',
         resolvedPath: null,
         status: 'checking'
+      },
+      // Opcional: runtime JavaScript exigido pelo yt-dlp para o YouTube
+      deno: {
+        name: this.isWin ? 'deno.exe' : 'deno',
+        label: 'Runtime JavaScript (deno)',
+        optional: true,
+        resolvedPath: null,
+        status: 'checking'
       }
     };
   }
@@ -72,17 +80,41 @@ class DependencyManager {
       ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-linux-64.zip';
     }
 
+    const denoTarget = this.isWin
+      ? 'x86_64-pc-windows-msvc'
+      : this.isMac
+        ? (process.arch === 'arm64' ? 'aarch64-apple-darwin' : 'x86_64-apple-darwin')
+        : (process.arch === 'arm64' ? 'aarch64-unknown-linux-gnu' : 'x86_64-unknown-linux-gnu');
+
     return {
       ytdlp: { url: ytdlpUrl, isZip: false },
       ffmpeg: { url: ffmpegUrl, isZip: true },
-      ffprobe: { url: ffprobeUrl, isZip: true }
+      ffprobe: { url: ffprobeUrl, isZip: true },
+      deno: { url: `https://github.com/denoland/deno/releases/latest/download/deno-${denoTarget}.zip`, isZip: true }
     };
   }
 
   checkSystemPath(binName) {
     try {
+      // 1. Tenta encontrar diretamente no PATH sem abrir processos externos
+      const pathEnv = process.env.PATH || process.env.Path || '';
+      const pathDirs = pathEnv.split(path.delimiter);
+      for (const dir of pathDirs) {
+        if (!dir) continue;
+        const candidate = path.join(dir, binName);
+        if (fs.existsSync(candidate)) {
+          return candidate;
+        }
+      }
+    } catch (_) {}
+
+    try {
       const cmd = this.isWin ? `where.exe ${binName}` : `which ${binName}`;
-      const stdout = execSync(cmd, { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf-8' });
+      const stdout = execSync(cmd, {
+        stdio: ['pipe', 'pipe', 'ignore'],
+        encoding: 'utf-8',
+        windowsHide: true
+      });
       const firstLine = stdout.trim().split(/\r?\n/)[0];
       if (firstLine && fs.existsSync(firstLine)) {
         return firstLine;
@@ -183,9 +215,10 @@ class DependencyManager {
     try {
       console.log('[dependencyManager] Verificando atualizações do yt-dlp em segundo plano...');
       const proc = spawn(ytdlpPath, ['-U'], {
-        detached: true,
-        stdio: 'ignore'
+        stdio: 'ignore',
+        windowsHide: true
       });
+      proc.on('error', () => {});
       proc.unref();
     } catch (err) {
       console.warn('[dependencyManager] Erro silencioso ao checar update do yt-dlp:', err.message);
@@ -209,14 +242,18 @@ class DependencyManager {
       }
     };
 
-    const keys = ['ytdlp', 'ffmpeg', 'ffprobe'];
+    const keys = ['ytdlp', 'ffmpeg', 'ffprobe', 'deno'];
 
     for (const key of keys) {
       const binMeta = this.binaries[key];
       updateUI(key, { status: 'checking', message: 'Verificando instalação...' });
 
-      // 1. Verifica se já está no PATH global
-      let foundPath = this.checkSystemPath(binMeta.name);
+      // 1. ffmpeg/ffprobe sempre ficam na pasta interna do app: é ela que é passada ao yt-dlp
+      //    via --ffmpeg-location, então um ffmpeg do PATH global não serviria.
+      let foundPath = null;
+      if (key === 'ytdlp') {
+        foundPath = this.checkSystemPath(binMeta.name);
+      }
       if (!foundPath) {
         // 2. Verifica se já existe na pasta isolada userData/bin
         foundPath = this.checkLocalBin(binMeta.name);
@@ -280,6 +317,7 @@ class DependencyManager {
           error: err.message,
           message: `Falha no download: ${err.message}`
         });
+        if (binMeta.optional) continue;
         throw new Error(`Falha ao configurar dependência ${binMeta.label}: ${err.message}`);
       }
     }
@@ -293,11 +331,13 @@ class DependencyManager {
   getSummary() {
     return {
       binDir: this.binDir,
-      ready: Object.values(this.binaries).every(b => b.status === 'ready'),
+      // Dependências opcionais (deno) não bloqueiam o app.
+      ready: Object.values(this.binaries).filter(b => !b.optional).every(b => b.status === 'ready'),
       binaries: {
         ytdlp: { ...this.binaries.ytdlp },
         ffmpeg: { ...this.binaries.ffmpeg },
-        ffprobe: { ...this.binaries.ffprobe }
+        ffprobe: { ...this.binaries.ffprobe },
+        deno: { ...this.binaries.deno }
       }
     };
   }
@@ -307,7 +347,8 @@ class DependencyManager {
       binDir: this.binDir,
       ytdlpPath: this.binaries.ytdlp.resolvedPath || path.join(this.binDir, this.binaries.ytdlp.name),
       ffmpegPath: this.binaries.ffmpeg.resolvedPath || path.join(this.binDir, this.binaries.ffmpeg.name),
-      ffprobePath: this.binaries.ffprobe.resolvedPath || path.join(this.binDir, this.binaries.ffprobe.name)
+      ffprobePath: this.binaries.ffprobe.resolvedPath || path.join(this.binDir, this.binaries.ffprobe.name),
+      denoPath: this.binaries.deno.resolvedPath || path.join(this.binDir, this.binaries.deno.name)
     };
   }
 }

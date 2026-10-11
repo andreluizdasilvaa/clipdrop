@@ -11,6 +11,23 @@
     "build": "electron-builder",
     "pack": "electron-builder --dir"
   },
+  "build": {
+    "appId": "com.your.clipdrop",
+    "productName": "ClipDrop",
+    "win": {
+      "icon": "src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico"
+    },
+    "nsis": {
+      "installerIcon": "src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico",
+      "uninstallerIcon": "src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico"
+    },
+    "mac": {
+      "icon": "src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico"
+    },
+    "linux": {
+      "icon": "src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico"
+    }
+  },
   "dependencies": {
     "adm-zip": "^0.5.16"
   },

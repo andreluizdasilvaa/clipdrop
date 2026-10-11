@@ -8,6 +8,7 @@ files:
   - package.json
   - node_modules/**/*
 win:
+  icon: src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico
   target:
     - target: nsis
       arch:
@@ -24,3 +25,5 @@ linux:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
+  installerIcon: src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico
+  uninstallerIcon: src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico

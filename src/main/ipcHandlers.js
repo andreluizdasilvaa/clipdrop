@@ -1,4 +1,4 @@
-const { ipcMain, dialog, shell, app } = require('electron');
+const { ipcMain, dialog, shell, app, nativeTheme } = require('electron');
 const path = require('path');
 
 function registerIpcHandlers({ mainWindow, dependencyManager, ytdlpExecutor }) {
@@ -30,8 +30,8 @@ function registerIpcHandlers({ mainWindow, dependencyManager, ytdlpExecutor }) {
 
   // Execução de Downloads
   ipcMain.handle('media:download', async (_event, options) => {
-    if (!options || !['audio', 'video'].includes(options.mode) || typeof options.url !== 'string') {
-      return { success: false, error: 'Pedido de download inválido.' };
+    if (!options || !['audio', 'video'].includes(options.mode) || typeof options.url !== 'string' || !options.url.trim()) {
+      return { success: false, error: 'Pedido de download inválido. O link é obrigatório.' };
     }
     const downloadId = options.id || `dl_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
@@ -96,6 +96,11 @@ function registerIpcHandlers({ mainWindow, dependencyManager, ytdlpExecutor }) {
       videos: app.getPath('videos'),
       userData: app.getPath('userData')
     };
+  });
+
+  // Obter tema do sistema operacional (dark ou light)
+  ipcMain.handle('system:get-theme', async () => {
+    return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
   });
 }
 

@@ -125,6 +125,13 @@ class PlaylistView {
   requestDownload() {
     const selected = this.selectedIndices();
     if (!selected.length) return;
+
+    const dlBtn = this.container.querySelector('[data-role="download"]');
+    if (dlBtn) {
+      dlBtn.disabled = true;
+      setTimeout(() => { if (dlBtn) dlBtn.disabled = false; }, 2500);
+    }
+
     // Playlist inteira = sem -I (null); seleção parcial = lista de índices.
     this.onDownload?.({
       playlist: this.playlist,

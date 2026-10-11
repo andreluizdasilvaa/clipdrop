@@ -24,14 +24,12 @@ class HomeView {
           <span class="mode-icon">${ICONS.music}</span>
           <span class="mode-name">Áudio &amp; Música</span>
           <span class="mode-desc">Baixe músicas e álbuns com capa e tags organizadas para pendrive ou celular</span>
-          <span class="mode-cta">Começar →</span>
         </button>
 
         <button type="button" class="mode-card" data-mode="video">
           <span class="mode-icon">${ICONS.video}</span>
           <span class="mode-name">Vídeo</span>
           <span class="mode-desc">Baixe vídeos individuais ou coleções em alta resolução</span>
-          <span class="mode-cta">Começar →</span>
         </button>
       </div>`;
 
@@ -42,7 +40,18 @@ class HomeView {
   }
 
   refreshGreeting() {
-    this.container.querySelector('[data-role="greeting"]').textContent = `${this.greeting()}!`;
+    let userName = '';
+    if (window.clipdropAPI && typeof window.clipdropAPI.getUserName === 'function') {
+      userName = window.clipdropAPI.getUserName();
+    }
+    
+    if (userName) {
+      // Capitaliza a primeira letra do nome
+      userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+      this.container.querySelector('[data-role="greeting"]').textContent = `${this.greeting()}, ${userName}!`;
+    } else {
+      this.container.querySelector('[data-role="greeting"]').textContent = `${this.greeting()}!`;
+    }
   }
 
   onShow() {

@@ -20,18 +20,12 @@ class SplashScreen {
 
     this.container.innerHTML = `
       <div class="splash-card">
-        <div class="splash-brand">
-          <div class="splash-logo">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
+        <div class="splash-brand" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+          <div class="brand" style="gap: 12px;">
+            <img src="assets/logos/logo_sem_fundo_sem_texto.png" alt="ClipDrop" height="40" style="object-fit: contain;">
+            <span class="brand-name" style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em;">ClipDrop</span>
           </div>
-          <div class="splash-title-wrap">
-            <h1 class="splash-title">ClipDrop</h1>
-            <p class="splash-subtitle">Preparando ambiente de alta velocidade...</p>
-          </div>
+          <p class="splash-subtitle">Preparando ambiente de alta velocidade...</p>
         </div>
 
         <div class="splash-checklist">

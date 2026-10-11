@@ -1,5 +1,59 @@
 // ClipDrop - inicialização e roteador de telas
 document.addEventListener('DOMContentLoaded', async () => {
+  // Gerenciamento de Modo Claro / Escuro
+  const setupTheme = async () => {
+    const isManual = localStorage.getItem('clipdrop_theme_manual') === 'true';
+    let initialTheme = localStorage.getItem('clipdrop_theme');
+
+    // Primeira vez: obtém diretamente do sistema operacional do usuário
+    if (!isManual || !initialTheme) {
+      try {
+        if (window.clipdropAPI && typeof window.clipdropAPI.getSystemTheme === 'function') {
+          initialTheme = await window.clipdropAPI.getSystemTheme();
+        }
+      } catch (e) {}
+      if (!initialTheme) {
+        initialTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+    }
+
+    const applyTheme = (theme, saveManual = false) => {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      localStorage.setItem('clipdrop_theme', theme);
+      if (saveManual) {
+        localStorage.setItem('clipdrop_theme_manual', 'true');
+      }
+      const toggleBtn = document.getElementById('themeToggleBtn');
+      if (toggleBtn) {
+        const isDark = theme === 'dark';
+        toggleBtn.setAttribute('title', isDark ? 'Mudar para modo claro' : 'Mudar para modo escuro');
+        toggleBtn.setAttribute('aria-label', isDark ? 'Mudar para modo claro' : 'Mudar para modo escuro');
+      }
+    };
+
+    applyTheme(initialTheme, false);
+
+    const toggleBtn = document.getElementById('themeToggleBtn');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme') || 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next, true);
+      });
+    }
+
+    // Acompanha mudanças no sistema do usuário se não tiver fixado manualmente
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (localStorage.getItem('clipdrop_theme_manual') !== 'true') {
+          applyTheme(e.matches ? 'dark' : 'light', false);
+        }
+      });
+    }
+  };
+  setupTheme();
+
   const downloads = new DownloadList('downloadsSection', 'downloadsList');
 
   const views = {

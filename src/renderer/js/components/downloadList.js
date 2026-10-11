@@ -1,8 +1,20 @@
-// Lista de transferências com progresso em tempo real
+// Lista de transferências com progresso em tempo real e gerenciamento de histórico
 class DownloadList {
   constructor(sectionId, listId) {
     this.section = document.getElementById(sectionId);
     this.list = document.getElementById(listId);
+    this.clearBtn = document.getElementById('clearDownloadsBtn');
+    this.moreBar = document.getElementById('downloadsMoreBar');
+    this.moreBtn = document.getElementById('toggleMoreDownloadsBtn');
+    this.isExpanded = false;
+
+    if (this.clearBtn) {
+      this.clearBtn.addEventListener('click', () => this.clearFinished());
+    }
+
+    if (this.moreBtn) {
+      this.moreBtn.addEventListener('click', () => this.toggleExpand());
+    }
 
     window.clipdropAPI.onDownloadProgress((data) => this.onProgress(data));
     window.clipdropAPI.onDownloadStatus((data) => this.onStatus(data));
@@ -47,12 +59,85 @@ class DownloadList {
       await window.clipdropAPI.cancelDownload(id);
       this.setStatus(id, 'Cancelado');
       card.classList.add('is-cancelled');
-      card.querySelector('[data-role="cancel"]').remove();
+      card.querySelector('[data-role="cancel"]')?.remove();
+      this.addRemoveButton(card);
       uiState.upsertDownload(id, { status: 'cancelled' });
+      this.updateVisibility();
     });
 
     this.list.prepend(card);
+    this.updateVisibility();
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  addRemoveButton(card) {
+    if (card.querySelector('[data-role="remove"]')) return;
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'icon-btn';
+    removeBtn.setAttribute('data-role', 'remove');
+    removeBtn.title = 'Remover da lista';
+    removeBtn.setAttribute('aria-label', 'Remover da lista');
+    removeBtn.innerHTML = ICONS.close;
+    removeBtn.addEventListener('click', () => {
+      card.remove();
+      this.updateVisibility();
+    });
+    card.appendChild(removeBtn);
+  }
+
+  clearFinished() {
+    const finishedCards = this.list.querySelectorAll('.download-card.is-done, .download-card.is-error, .download-card.is-cancelled');
+    if (finishedCards.length === 0) return;
+    finishedCards.forEach((c) => c.remove());
+    this.updateVisibility();
+    showToast('Downloads finalizados removidos.', 'info');
+  }
+
+  toggleExpand() {
+    this.isExpanded = !this.isExpanded;
+    this.updateVisibility();
+  }
+
+  updateVisibility() {
+    const cards = Array.from(this.list.children);
+    const total = cards.length;
+
+    if (total === 0) {
+      this.section.hidden = true;
+      if (this.moreBar) this.moreBar.style.display = 'none';
+      if (this.clearBtn) this.clearBtn.style.display = 'none';
+      return;
+    }
+
+    this.section.hidden = false;
+
+    // Exibe botão de limpar se houver pelo menos um download finalizado
+    const hasFinished = cards.some((c) =>
+      c.classList.contains('is-done') || c.classList.contains('is-error') || c.classList.contains('is-cancelled')
+    );
+    if (this.clearBtn) {
+      this.clearBtn.style.display = hasFinished ? 'inline-flex' : 'none';
+    }
+
+    // Regra de mais de 5 itens
+    if (total > 5) {
+      if (this.isExpanded) {
+        cards.forEach((c) => (c.style.display = ''));
+        if (this.moreBar) this.moreBar.style.display = 'flex';
+        if (this.moreBtn) this.moreBtn.textContent = 'Ver menos';
+      } else {
+        cards.forEach((c, idx) => {
+          c.style.display = idx < 5 ? '' : 'none';
+        });
+        if (this.moreBar) this.moreBar.style.display = 'flex';
+        const hiddenCount = total - 5;
+        if (this.moreBtn) this.moreBtn.textContent = `Ver mais (${hiddenCount})`;
+      }
+    } else {
+      cards.forEach((c) => (c.style.display = ''));
+      if (this.moreBar) this.moreBar.style.display = 'none';
+    }
   }
 
   el(id, role) {
@@ -69,15 +154,25 @@ class DownloadList {
     if (!bar) return;
     bar.style.width = `${percent}%`;
     this.el(downloadId, 'percent').textContent = `${percent.toFixed(0)}%`;
-    this.el(downloadId, 'stats').textContent = `${speed} · restam ${eta}`;
-    this.setStatus(downloadId, message);
+    const speedText = speed && speed !== '--' && speed !== 'NA' && speed !== 'Unknown' ? speed : '';
+    const etaText = eta && eta !== '--' && eta !== 'NA' ? `restam ${eta}` : '';
+    const statsText = [speedText, etaText].filter(Boolean).join(' · ');
+    this.el(downloadId, 'stats').textContent = statsText;
+    if (message) this.setStatus(downloadId, message);
     uiState.upsertDownload(downloadId, { status: 'downloading', percent });
   }
 
-  onStatus({ downloadId, status, message }) {
+  onStatus({ downloadId, status, message, percent }) {
     const card = document.getElementById(`download-${downloadId}`);
     if (!card || card.classList.contains('is-cancelled')) return;
-    this.setStatus(downloadId, message);
+    if (message) this.setStatus(downloadId, message);
+
+    if (typeof percent === 'number') {
+      const bar = this.el(downloadId, 'bar');
+      if (bar) bar.style.width = `${percent}%`;
+      const pctEl = this.el(downloadId, 'percent');
+      if (pctEl) pctEl.textContent = `${percent.toFixed(0)}%`;
+    }
 
     if (status === 'completed') {
       this.finish(downloadId, 'is-done');
@@ -89,6 +184,7 @@ class DownloadList {
       this.fail(downloadId, message);
     }
     uiState.upsertDownload(downloadId, { status });
+    this.updateVisibility();
   }
 
   fail(id, message) {
@@ -101,8 +197,11 @@ class DownloadList {
 
   finish(id, cssClass) {
     const card = document.getElementById(`download-${id}`);
-    card?.classList.add(cssClass);
-    card?.querySelector('[data-role="cancel"]')?.remove();
+    if (!card) return;
+    card.classList.add(cssClass);
+    card.querySelector('[data-role="cancel"]')?.remove();
+    this.addRemoveButton(card);
+    this.updateVisibility();
   }
 }
 

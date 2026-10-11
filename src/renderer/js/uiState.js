@@ -1,18 +1,49 @@
 // Gerenciamento de estado da interface do ClipDrop (navegação por modos)
 
-const STORAGE_KEY = 'clipdrop_settings_v2';
+const STORAGE_KEY = 'clipdrop_settings_v5';
 
 const DEFAULT_SETTINGS = {
   audio: {
-    format: 'mp3', // 'mp3' | 'flac'
-    embedCover: true,
-    embedMetadata: true,
-    sponsorblock: false
+    format: 'mp3', // 'mp3' | 'm4a' | 'flac' | 'wav' | 'opus'
+    quality: '0', // '0' (melhor VBR) | '320' | '256' | '192'
+    advanced: {
+      embedCover: true,
+      embedMetadata: true,
+      trim: {
+        enabled: false,
+        start: '',
+        end: ''
+      },
+      playlistRange: '',
+      ignoreExisting: true,
+      concurrentFragments: true
+    }
   },
   video: {
-    quality: 'best', // 'best' | '1080' | '720'
-    subtitles: { enabled: false, lang: 'pt' }, // 'pt' | 'en'
-    sponsorblock: { sponsor: false, introOutro: false, selfpromo: false, mode: 'remove' } // 'remove' | 'mark'
+    quality: 'best', // 'best' | '1080' | '720' | '480'
+    subtitles: {
+      enabled: false,
+      lang: 'pt', // 'pt' | 'en' | 'es'
+      type: 'official', // 'official' | 'auto' | 'both'
+      method: 'softsub', // 'softsub' | 'separate' | 'hardsub'
+      format: 'srt'
+    },
+    advanced: {
+      container: 'mp4', // 'mp4' | 'mkv' | 'webm' | 'mov'
+      videoOnly: false,
+      recodeVideo: false,
+      embedChapters: true,
+      embedThumbnail: false,
+      embedMetadata: true,
+      trim: {
+        enabled: false,
+        start: '',
+        end: ''
+      },
+      playlistRange: '',
+      ignoreExisting: true,
+      concurrentFragments: true
+    }
   }
 };
 
@@ -33,7 +64,23 @@ function deepMerge(base, override) {
 
 function loadSettings() {
   try {
-    return deepMerge(DEFAULT_SETTINGS, JSON.parse(localStorage.getItem(STORAGE_KEY)));
+    const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('clipdrop_settings_v4') || localStorage.getItem('clipdrop_settings_v3') || localStorage.getItem('clipdrop_settings_v2');
+    const parsed = JSON.parse(saved);
+    // Migração: embedCover/embedMetadata de áudio passaram a viver em audio.advanced.
+    if (parsed && parsed.audio && !parsed.audio.advanced) {
+      parsed.audio.advanced = {
+        embedCover: parsed.audio.embedCover,
+        embedMetadata: parsed.audio.embedMetadata
+      };
+    }
+    // Garante que o multi-threading esteja habilitado em migrações que não o possuíam
+    if (parsed && parsed.video && parsed.video.advanced && parsed.video.advanced.concurrentFragments === undefined) {
+      parsed.video.advanced.concurrentFragments = true;
+    }
+    if (parsed && parsed.audio && parsed.audio.advanced && parsed.audio.advanced.concurrentFragments === undefined) {
+      parsed.audio.advanced.concurrentFragments = true;
+    }
+    return deepMerge(DEFAULT_SETTINGS, parsed);
   } catch (_) {
     return structuredClone(DEFAULT_SETTINGS);
   }
@@ -70,19 +117,24 @@ class UIStateManager {
   }
 
   /** Atualiza uma configuração por caminho, ex.: setSetting('video', 'subtitles.lang', 'en'). */
-  setSetting(mode, path, value) {
+  setSetting(mode, path, value, silent = false) {
     const keys = path.split('.');
     let target = this.state.settings[mode];
     for (let i = 0; i < keys.length - 1; i++) {
+      if (!target[keys[i]] || typeof target[keys[i]] !== 'object') {
+        target[keys[i]] = {};
+      }
       target = target[keys[i]];
     }
     target[keys[keys.length - 1]] = value;
     this.persist();
-    this.notify();
+    if (!silent) {
+      this.notify();
+    }
   }
 
   getSetting(mode, path) {
-    return path.split('.').reduce((obj, key) => obj[key], this.state.settings[mode]);
+    return path.split('.').reduce((obj, key) => (obj != null ? obj[key] : undefined), this.state.settings[mode]);
   }
 
   persist() {
