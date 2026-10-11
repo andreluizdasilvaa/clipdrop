@@ -277,6 +277,13 @@ Ao estender o ClipDrop com novos recursos, siga as seguintes diretrizes arquitet
 
 ---
 
+## Aviso Legal (Disclaimer)
+
+> Este software é fornecido exclusivamente para fins educacionais, arquivamento pessoal e backup de conteúdos próprios ou de domínio público. Os desenvolvedores não incentivam o download de mídias protegidas por direitos autorais em desacordo com as leis locais e com os Termos de Serviço de cada plataforma.
+
+---
+
 ## Licença
 
 Este projeto é distribuído sob a licença **MIT**. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
+
