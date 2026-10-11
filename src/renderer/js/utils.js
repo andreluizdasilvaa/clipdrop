@@ -85,6 +85,72 @@ function toggleHtml(path, label, checked, hint = '') {
     </label>`;
 }
 
+/** HTML de um accordion de opções avançadas. */
+function accordionHtml({ title = 'Opções Avançadas', hint = '', isCustom = false, isOpen = false, content = '' } = {}) {
+  return `
+    <div class="advanced-accordion">
+      <button type="button" class="accordion-trigger ${isOpen ? 'open' : ''}" data-role="accordion-trigger" aria-expanded="${isOpen}">
+        <div class="accordion-trigger-left">
+          <span class="accordion-icon">${ICONS.settings}</span>
+          <div class="accordion-trigger-text">
+            <span class="accordion-title">${escapeHtml(title)}</span>
+            ${hint ? `<span class="accordion-hint">${escapeHtml(hint)}</span>` : ''}
+          </div>
+        </div>
+        <div class="accordion-trigger-right">
+          ${isCustom ? '<span class="chip chip-solid chip-sm">Personalizado</span>' : ''}
+          <span class="accordion-chevron ${isOpen ? 'open' : ''}">${ICONS.chevronDown}</span>
+        </div>
+      </button>
+
+      <div class="accordion-panel ${isOpen ? 'open' : ''}">
+        <div class="accordion-inner">
+          ${content}
+        </div>
+      </div>
+    </div>`;
+}
+
+/** HTML do card de corte de trecho (Trim). */
+function trimCardHtml({ trim = {}, prefix = 'advanced.trim', title = 'Corte de Trecho (Trim)', toggleLabel = 'Extrair Apenas um Trecho', toggleHint = 'Baixa somente o intervalo de tempo escolhido' } = {}) {
+  return `
+    <section class="adv-card">
+      <h3 class="adv-card-title">${escapeHtml(title)}</h3>
+      ${toggleHtml(
+        `${prefix}.enabled`,
+        toggleLabel,
+        Boolean(trim.enabled),
+        toggleHint
+      )}
+      ${trim.enabled ? `
+        <div class="setting-indent adv-inputs-group">
+          <div class="adv-input-field">
+            <label class="adv-field-label">Ponto Inicial</label>
+            <input type="text" class="adv-input" data-setting="${escapeHtml(prefix)}.start"
+                   placeholder="00:00:00" value="${escapeHtml(trim.start || '')}" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="adv-input-field">
+            <label class="adv-field-label">Ponto Final</label>
+            <input type="text" class="adv-input" data-setting="${escapeHtml(prefix)}.end"
+                   placeholder="00:00:00" value="${escapeHtml(trim.end || '')}" autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+        <span class="adv-help-text">Formato HH:MM:SS ou MM:SS. Deixe em branco para usar o início (0) ou o fim.</span>
+      ` : ''}
+    </section>`;
+}
+
+/** HTML do campo de intervalo de playlist. */
+function playlistRangeFieldHtml({ range = '', settingPath = 'advanced.playlistRange', label = 'Intervalo da Playlist / Canal', placeholder = 'Ex: 1-10 ou 1,3,5 (vazio = todos)', hint = 'Define quais itens da lista serão baixados.' } = {}) {
+  return `
+    <div class="adv-input-field">
+      <label class="adv-field-label">${escapeHtml(label)}</label>
+      <input type="text" class="adv-input" data-setting="${escapeHtml(settingPath)}"
+             placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(range || '')}" autocomplete="off" spellcheck="false" />
+      ${hint ? `<span class="adv-help-text">${escapeHtml(hint)}</span>` : ''}
+    </div>`;
+}
+
 window.escapeHtml = escapeHtml;
 window.ICONS = ICONS;
 window.showToast = showToast;
@@ -92,3 +158,6 @@ window.isHttpUrl = isHttpUrl;
 window.segmentedHtml = segmentedHtml;
 window.selectHtml = selectHtml;
 window.toggleHtml = toggleHtml;
+window.accordionHtml = accordionHtml;
+window.trimCardHtml = trimCardHtml;
+window.playlistRangeFieldHtml = playlistRangeFieldHtml;

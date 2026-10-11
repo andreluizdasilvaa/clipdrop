@@ -208,7 +208,7 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  padding: 12px var(--space-4);
+  padding: 12px var(--space-4) 12px 58px;
   border-top: 1px solid var(--line);
   flex-shrink: 0;
   font-size: 0.85rem;
@@ -216,6 +216,31 @@ textarea:focus-visible {
 
 body[data-view="splash"] .app-footer,
 body[data-view="home"] .app-footer {
+  display: none;
+}
+
+/* Indicador de versão discreto no canto inferior esquerdo */
+.app-version {
+  position: fixed;
+  bottom: 8px;
+  left: 12px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  opacity: 0.22;
+  user-select: none;
+  cursor: default;
+  z-index: 50;
+  line-height: 1;
+  transition: opacity 0.2s ease;
+}
+
+.app-version:hover {
+  opacity: 0.55;
+}
+
+body[data-view="splash"] .app-version {
   display: none;
 }
 

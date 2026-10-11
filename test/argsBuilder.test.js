@@ -12,14 +12,14 @@ test('rejeita modo inválido e URL vazia', () => {
   assert.throws(() => buildDownloadArgs({ ...base, mode: 'audio', url: '  ' }), /link válido/);
 });
 
-test('argumentos comuns: progresso, ffmpeg, archive e paths', () => {
+test('argumentos comuns: progresso, ffmpeg, paths e sem archive', () => {
   const args = buildDownloadArgs({ ...base, mode: 'audio' });
   assert.ok(args.includes('--newline'));
   assert.match(valueAfter(args, '--progress-template'), /^download:/);
   assert.equal(valueAfter(args, '--ffmpeg-location'), '/bin');
-  assert.equal(valueAfter(args, '--download-archive'), path.join('/dl', '.archive-audio.txt'));
+  assert.ok(!args.includes('--download-archive'));
   const video = buildDownloadArgs({ ...base, mode: 'video' });
-  assert.equal(valueAfter(video, '--download-archive'), path.join('/dl', '.archive.txt'));
+  assert.ok(!video.includes('--download-archive'));
   assert.equal(valueAfter(args, '--paths'), '/dl');
   assert.equal(args[args.length - 1], 'https://example.com/v');
 });
@@ -102,14 +102,14 @@ test('playlist parcial usa -I com os índices marcados', () => {
 
 test('vídeo: qualidade 480p e modo apenas vídeo (sem áudio)', () => {
   const q480 = buildDownloadArgs({ ...base, mode: 'video', video: { quality: '480' } });
-  assert.equal(valueAfter(q480, '-f'), 'bv*[height<=480]+ba/b[height<=480]');
+  assert.equal(valueAfter(q480, '-f'), 'bv*[height<=480]+ba/b[height<=480]/bv*+ba/b');
 
   const videoOnly = buildDownloadArgs({
     ...base,
     mode: 'video',
     video: { quality: '1080', advanced: { videoOnly: true } }
   });
-  assert.equal(valueAfter(videoOnly, '-f'), 'bv*[height<=1080]');
+  assert.equal(valueAfter(videoOnly, '-f'), 'bv*[height<=1080]/bv*');
   assert.ok(!valueAfter(videoOnly, '-f').includes('+ba/b'));
 });
 
@@ -181,11 +181,11 @@ test('vídeo: corte por intervalo de tempo (trim)', () => {
   assert.equal(valueAfter(startOnly, '--download-sections'), '*00:02:00-inf');
 });
 
-test('vídeo: paralelismo (-N 4), ignoreExisting desativado e playlistRange textual', () => {
+test('vídeo: paralelismo (-N 4) e playlistRange textual', () => {
   const multiFrag = buildDownloadArgs({
     ...base,
     mode: 'video',
-    video: { advanced: { concurrentFragments: true, ignoreExisting: false } }
+    video: { advanced: { concurrentFragments: true } }
   });
   assert.equal(valueAfter(multiFrag, '-N'), '4');
   assert.ok(!multiFrag.includes('--download-archive'));

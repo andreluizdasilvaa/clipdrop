@@ -21,12 +21,27 @@ class ModeView {
     this.downloads = downloads;
     this.media = null;
     this.inspecting = false;
+    this.accordionOpen = false;
     this.mount();
   }
 
   // ---- Ganchos para as subclasses ----
   settingsHtml() { return ''; }
   extraOptions() { return {}; }
+
+  /**
+   * Verifica configurações avançadas comuns aos modos (trim, playlistRange, etc.)
+   * @param {object} adv
+   * @returns {boolean}
+   */
+  hasCommonCustomAdvanced(adv = {}) {
+    return (
+      Boolean(adv.trim?.enabled) ||
+      Boolean(adv.playlistRange) ||
+      adv.concurrentFragments === false ||
+      adv.embedMetadata === false
+    );
+  }
 
   mount() {
     this.container.innerHTML = `
@@ -72,24 +87,65 @@ class ModeView {
     this.renderSettings();
   }
 
-  // ---- Configurações (delegação de eventos para segmented + toggles) ----
+  // ---- Configurações (delegação centralizada de eventos) ----
   renderSettings() {
     this.settingsEl.innerHTML = this.settingsHtml();
+  }
+
+  toggleAccordion() {
+    this.accordionOpen = !this.accordionOpen;
+    const trigger = this.settingsEl.querySelector('[data-role="accordion-trigger"]');
+    const panel = this.settingsEl.querySelector('.accordion-panel');
+    const chevron = this.settingsEl.querySelector('.accordion-chevron');
+    if (trigger) {
+      trigger.setAttribute('aria-expanded', this.accordionOpen);
+      trigger.classList.toggle('open', this.accordionOpen);
+    }
+    if (panel) panel.classList.toggle('open', this.accordionOpen);
+    if (chevron) chevron.classList.toggle('open', this.accordionOpen);
   }
 
   bindSettings() {
     this.settingsEl.addEventListener('click', (e) => {
       const btn = e.target.closest('.seg-btn');
-      if (!btn) return;
-      uiState.setSetting(this.mode, btn.dataset.seg, btn.dataset.value);
-      this.renderSettings();
+      if (btn) {
+        uiState.setSetting(this.mode, btn.dataset.seg, btn.dataset.value);
+        this.renderSettings();
+        return;
+      }
+
+      const trigger = e.target.closest('[data-role="accordion-trigger"]');
+      if (trigger) {
+        this.toggleAccordion();
+      }
+    });
+
+    this.settingsEl.addEventListener('input', (e) => {
+      const input = e.target.closest('input[data-setting]');
+      if (input) {
+        uiState.setSetting(this.mode, input.dataset.setting, input.value, true);
+      }
     });
 
     this.settingsEl.addEventListener('change', (e) => {
-      const input = e.target.closest('input[data-toggle]');
-      if (!input) return;
-      uiState.setSetting(this.mode, input.dataset.toggle, input.checked);
-      this.renderSettings();
+      const toggle = e.target.closest('input[data-toggle]');
+      if (toggle) {
+        uiState.setSetting(this.mode, toggle.dataset.toggle, toggle.checked);
+        this.renderSettings();
+        return;
+      }
+
+      const select = e.target.closest('select[data-select]');
+      if (select) {
+        uiState.setSetting(this.mode, select.dataset.select, select.value);
+        this.renderSettings();
+        return;
+      }
+
+      const input = e.target.closest('input[data-setting]');
+      if (input) {
+        uiState.setSetting(this.mode, input.dataset.setting, input.value);
+      }
     });
   }
 

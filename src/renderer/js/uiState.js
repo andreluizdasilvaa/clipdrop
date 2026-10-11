@@ -15,7 +15,6 @@ const DEFAULT_SETTINGS = {
         end: ''
       },
       playlistRange: '',
-      ignoreExisting: true,
       concurrentFragments: true
     }
   },
@@ -41,7 +40,6 @@ const DEFAULT_SETTINGS = {
         end: ''
       },
       playlistRange: '',
-      ignoreExisting: true,
       concurrentFragments: true
     }
   }

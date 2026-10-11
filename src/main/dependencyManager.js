@@ -3,7 +3,7 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const { spawn, execSync } = require('child_process');
-const { app } = require('electron');
+const { getUserDataDir } = require('./utils/pathUtils');
 
 class DependencyManager {
   constructor() {
@@ -12,15 +12,7 @@ class DependencyManager {
     this.isLinux = process.platform === 'linux';
 
     // Armazenamento isolado de binários em userData/bin (sem exigir admin)
-    let baseUserData;
-    try {
-      baseUserData = app && typeof app.getPath === 'function' 
-        ? app.getPath('userData') 
-        : path.join(process.env.APPDATA || process.env.HOME || '.', '.clipdrop');
-    } catch (_) {
-      baseUserData = path.join(process.env.APPDATA || process.env.HOME || '.', '.clipdrop');
-    }
-    this.binDir = path.join(baseUserData, 'bin');
+    this.binDir = path.join(getUserDataDir(), 'bin');
 
     this.binaries = {
       ytdlp: {
@@ -273,12 +265,14 @@ class DependencyManager {
       const info = urls[key];
       updateUI(key, { status: 'downloading', percent: 0, message: 'Baixando binário oficial...' });
 
+      const onProgress = ({ percent }) => {
+        updateUI(key, { status: 'downloading', percent, message: `Baixando... ${percent}%` });
+      };
+
       try {
         if (info.isZip) {
           const tempZip = path.join(this.binDir, `${key}_temp.zip`);
-          await this.downloadWithProgress(info.url, tempZip, ({ percent }) => {
-            updateUI(key, { status: 'downloading', percent, message: `Baixando... ${percent}%` });
-          });
+          await this.downloadWithProgress(info.url, tempZip, onProgress);
 
           updateUI(key, { status: 'extracting', percent: 100, message: 'Descompactando arquivos...' });
           await this.extractZip(tempZip, this.binDir, binMeta.name);
@@ -298,9 +292,7 @@ class DependencyManager {
         } else {
           // Arquivo executável direto (ex: yt-dlp standalone)
           const targetPath = path.join(this.binDir, binMeta.name);
-          await this.downloadWithProgress(info.url, targetPath, ({ percent }) => {
-            updateUI(key, { status: 'downloading', percent, message: `Baixando... ${percent}%` });
-          });
+          await this.downloadWithProgress(info.url, targetPath, onProgress);
 
           this.applyUnixPermissions(targetPath);
 

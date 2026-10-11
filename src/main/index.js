@@ -5,12 +5,16 @@ const path = require('path');
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 
 const DependencyManager = require('./dependencyManager');
-const YtdlpExecutor = require('./ytdlpExecutor');
-const { registerIpcHandlers } = require('./ipcHandlers');
+const DownloadService = require('./services/DownloadService');
+const MediaInspector = require('./services/MediaInspector');
+const SystemService = require('./services/SystemService');
+const { registerAllIpcHandlers } = require('./ipc');
 
 let mainWindow = null;
 let dependencyManager = null;
-let ytdlpExecutor = null;
+let downloadService = null;
+let mediaInspector = null;
+let systemService = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -32,11 +36,19 @@ function createWindow() {
   });
 
   dependencyManager = new DependencyManager();
-  ytdlpExecutor = new YtdlpExecutor(dependencyManager);
+  downloadService = new DownloadService(dependencyManager);
+  mediaInspector = new MediaInspector(dependencyManager);
+  systemService = new SystemService();
 
   mainWindow.setMenu(null);
 
-  registerIpcHandlers({ mainWindow, dependencyManager, ytdlpExecutor });
+  registerAllIpcHandlers({
+    mainWindow,
+    downloadService,
+    mediaInspector,
+    dependencyManager,
+    systemService
+  });
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 

@@ -58,11 +58,8 @@ class DownloadList {
     card.querySelector('[data-role="cancel"]').addEventListener('click', async () => {
       await window.clipdropAPI.cancelDownload(id);
       this.setStatus(id, 'Cancelado');
-      card.classList.add('is-cancelled');
-      card.querySelector('[data-role="cancel"]')?.remove();
-      this.addRemoveButton(card);
+      this.finish(id, 'is-cancelled');
       uiState.upsertDownload(id, { status: 'cancelled' });
-      this.updateVisibility();
     });
 
     this.list.prepend(card);

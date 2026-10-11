@@ -5,32 +5,38 @@ const PROGRESS_TEMPLATE =
 
 const VIDEO_FORMATS = {
   best: 'bv*+ba/b',
-  '1080': 'bv*[height<=1080]+ba/b[height<=1080]',
-  '720': 'bv*[height<=720]+ba/b[height<=720]',
-  '480': 'bv*[height<=480]+ba/b[height<=480]'
+  '1080': 'bv*[height<=1080]+ba/b[height<=1080]/bv*+ba/b',
+  '720': 'bv*[height<=720]+ba/b[height<=720]/bv*+ba/b',
+  '480': 'bv*[height<=480]+ba/b[height<=480]/bv*+ba/b'
 };
 
 const VIDEO_ONLY_FORMATS = {
   best: 'bv*',
-  '1080': 'bv*[height<=1080]',
-  '720': 'bv*[height<=720]',
-  '480': 'bv*[height<=480]'
+  '1080': 'bv*[height<=1080]/bv*',
+  '720': 'bv*[height<=720]/bv*',
+  '480': 'bv*[height<=480]/bv*'
 };
 
-// Idiomas exatos: padrões como 'pt.*' casam com dezenas de faixas de tradução automática
-// (pt-en, pt-es...) e geram dezenas de requisições, o que causa HTTP 429.
-const SUBTITLE_LANGS = {
-  pt: 'pt,pt-BR,pt-PT',
-  en: 'en,en-US,en-GB',
-  es: 'es,es-419,es-ES',
-  all: 'all,-live_chat'
-};
+const { MEDIA_FORMATS } = require('../shared/constants/mediaFormats');
 
-const AUDIO_FORMATS = ['mp3', 'm4a', 'flac', 'wav', 'opus'];
-const LOSSLESS_FORMATS = ['flac', 'wav'];
-const AUDIO_BITRATES = ['320', '256', '192'];
+const SUBTITLE_LANGS = MEDIA_FORMATS.SUBTITLES.LANGUAGES;
+const AUDIO_FORMATS = MEDIA_FORMATS.AUDIO.FORMATS;
+const LOSSLESS_FORMATS = MEDIA_FORMATS.AUDIO.LOSSLESS;
+const AUDIO_BITRATES = MEDIA_FORMATS.AUDIO.BITRATES;
 const TIME_PATTERN = /^\d+(:\d{1,2}){0,2}(\.\d+)?$/;
 const RANGE_PATTERN = /^[\d,\-: ]+$/;
+
+function buildTrimArgs(trim) {
+  if (!trim || !trim.enabled || (!trim.start && !trim.end)) {
+    return [];
+  }
+  const start = String(trim.start || '').trim() || '0';
+  const end = String(trim.end || '').trim() || 'inf';
+  if (TIME_PATTERN.test(start) && (end === 'inf' || TIME_PATTERN.test(end))) {
+    return ['--download-sections', `*${start}-${end}`];
+  }
+  return [];
+}
 
 function buildAudioArgs(audio = {}) {
   const adv = audio.advanced || {};
@@ -62,15 +68,7 @@ function buildAudioArgs(audio = {}) {
     args.push('--convert-thumbnails', 'jpg', '--embed-thumbnail', '--no-write-thumbnail');
   }
   args.push('--no-keep-video');
-
-  const trim = adv.trim || {};
-  if (trim.enabled && (trim.start || trim.end)) {
-    const start = String(trim.start || '').trim() || '0';
-    const end = String(trim.end || '').trim() || 'inf';
-    if (TIME_PATTERN.test(start) && (end === 'inf' || TIME_PATTERN.test(end))) {
-      args.push('--download-sections', `*${start}-${end}`);
-    }
-  }
+  args.push(...buildTrimArgs(adv.trim || audio.trim));
   return args;
 }
 
@@ -139,11 +137,7 @@ function buildVideoArgs(video = {}) {
     }
   }
 
-  if (trim.enabled && (trim.start || trim.end)) {
-    const start = String(trim.start || '').trim() || '0';
-    const end = String(trim.end || '').trim() || 'inf';
-    args.push('--download-sections', `*${start}-${end}`);
-  }
+  args.push(...buildTrimArgs(adv.trim || video.trim));
 
   return args;
 }
@@ -173,7 +167,6 @@ function buildDownloadArgs(opts) {
 
   const modeSettings = (mode === 'audio' ? audio : video) || {};
   const adv = modeSettings.advanced || {};
-  const ignoreExisting = adv.ignoreExisting ?? modeSettings.ignoreExisting;
   // Multi-threading (fragmentos concorrentes) ativado por padrão para acelerar o download
   const concurrentFragments = (adv.concurrentFragments ?? modeSettings.concurrentFragments) !== false;
   const cautiousMode = Boolean(adv.cautiousMode ?? modeSettings.cautiousMode);
@@ -198,12 +191,6 @@ function buildDownloadArgs(opts) {
   // Runtime JavaScript interno (deno): necessário para o YouTube e reduz bloqueios/formatos ausentes.
   if (denoPath) {
     args.push('--js-runtimes', `deno:${denoPath}`);
-  }
-
-  if (ignoreExisting !== false) {
-    // Histórico separado por modo: um vídeo já baixado não bloqueia o áudio do mesmo link.
-    const archiveName = mode === 'audio' ? '.archive-audio.txt' : '.archive.txt';
-    args.push('--download-archive', path.join(outputDir, archiveName));
   }
 
   if (tempDir) {

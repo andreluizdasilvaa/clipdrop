@@ -1,45 +1,52 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const os = require('os');
+const { IPC_CHANNELS } = require('../shared/constants/ipcChannels');
 
+/**
+ * Preload Script seguro e desacoplado.
+ * Nenhuma API nativa do Node (como os ou fs) é exposta ou acessada diretamente aqui.
+ * Toda a comunicação passa pelos canais IPC catalogados e protegidos por contextIsolation.
+ */
 contextBridge.exposeInMainWorld('clipdropAPI', {
+  // Usuário do sistema (via IPC síncrono para inicialização imediata da UI)
   getUserName: () => {
     try {
-      return os.userInfo().username;
-    } catch (e) {
+      return ipcRenderer.sendSync(IPC_CHANNELS.SYSTEM.GET_USERNAME_SYNC) || '';
+    } catch (_) {
       return '';
     }
   },
+
   // Verificação e configuração de dependências
-  getDependencyStatus: () => ipcRenderer.invoke('dependencies:get-status'),
-  startDependencySetup: () => ipcRenderer.invoke('dependencies:start-setup'),
+  getDependencyStatus: () => ipcRenderer.invoke(IPC_CHANNELS.DEPENDENCIES.GET_STATUS),
+  startDependencySetup: () => ipcRenderer.invoke(IPC_CHANNELS.DEPENDENCIES.START_SETUP),
   onDependencyProgress: (callback) => {
     const handler = (_event, data) => callback(data);
-    ipcRenderer.on('dependencies:progress', handler);
-    return () => ipcRenderer.removeListener('dependencies:progress', handler);
+    ipcRenderer.on(IPC_CHANNELS.DEPENDENCIES.PROGRESS, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.DEPENDENCIES.PROGRESS, handler);
   },
 
   // Inspeção de link e metadados
-  inspectUrl: (url) => ipcRenderer.invoke('media:inspect', url),
+  inspectUrl: (url) => ipcRenderer.invoke(IPC_CHANNELS.MEDIA.INSPECT, url),
 
   // Downloads e streaming de progresso
-  downloadMedia: (options) => ipcRenderer.invoke('media:download', options),
-  cancelDownload: (id) => ipcRenderer.invoke('media:cancel-download', id),
+  downloadMedia: (options) => ipcRenderer.invoke(IPC_CHANNELS.DOWNLOAD.START, options),
+  cancelDownload: (id) => ipcRenderer.invoke(IPC_CHANNELS.DOWNLOAD.CANCEL, id),
   onDownloadProgress: (callback) => {
     const handler = (_event, data) => callback(data);
-    ipcRenderer.on('download:progress', handler);
-    return () => ipcRenderer.removeListener('download:progress', handler);
+    ipcRenderer.on(IPC_CHANNELS.DOWNLOAD.PROGRESS, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.DOWNLOAD.PROGRESS, handler);
   },
   onDownloadStatus: (callback) => {
     const handler = (_event, data) => callback(data);
-    ipcRenderer.on('download:status', handler);
-    return () => ipcRenderer.removeListener('download:status', handler);
+    ipcRenderer.on(IPC_CHANNELS.DOWNLOAD.STATUS, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.DOWNLOAD.STATUS, handler);
   },
 
   // Integração com o sistema de arquivos
-  chooseDirectory: (defaultPath) => ipcRenderer.invoke('dialog:choose-directory', defaultPath),
-  openFolder: (path) => ipcRenderer.invoke('shell:open-folder', path),
-  getDefaultPaths: () => ipcRenderer.invoke('system:get-default-paths'),
+  chooseDirectory: (defaultPath) => ipcRenderer.invoke(IPC_CHANNELS.SYSTEM.CHOOSE_DIRECTORY, defaultPath),
+  openFolder: (path) => ipcRenderer.invoke(IPC_CHANNELS.SYSTEM.OPEN_FOLDER, path),
+  getDefaultPaths: () => ipcRenderer.invoke(IPC_CHANNELS.SYSTEM.GET_DEFAULT_PATHS),
 
   // Tema do sistema operacional
-  getSystemTheme: () => ipcRenderer.invoke('system:get-theme')
+  getSystemTheme: () => ipcRenderer.invoke(IPC_CHANNELS.SYSTEM.GET_THEME)
 });
