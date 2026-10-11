@@ -14,14 +14,6 @@ win:
       arch:
         - x64
   artifactName: "${productName}-Setup-${version}.${ext}"
-mac:
-  target:
-    - dmg
-  category: public.app-category.utilities
-linux:
-  target:
-    - AppImage
-  category: AudioVideo
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true

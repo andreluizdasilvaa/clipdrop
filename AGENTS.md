@@ -6,7 +6,7 @@
 
 ## 1. Visão Geral do Projeto
 
-O **ClipDrop** é uma aplicação desktop multiplataforma desenvolvida em **Electron**. Seu propósito fundamental é fornecer uma interface gráfica moderna, amigável, rápida e minimalista para download, extração de áudio, conversão e corte de mídias da web utilizando **yt-dlp** e **FFmpeg**.
+O **ClipDrop** é uma aplicação desktop desenvolvida para Windows em **Electron**. Seu propósito fundamental é fornecer uma interface gráfica moderna, amigável, rápida e minimalista para download, extração de áudio, conversão e corte de mídias da web utilizando **yt-dlp** e **FFmpeg**.
 
 ### Arquitetura Central
 O sistema é estruturado em três camadas estritamente isoladas para máxima segurança e manutenibilidade:
@@ -42,7 +42,7 @@ O sistema é estruturado em três camadas estritamente isoladas para máxima seg
 | **JS Engine Auxiliar**| [Deno](https://github.com/denoland/deno) | Latest Standalone | Resolução de desafios antibot/JS do YouTube |
 | **Descompressão** | [adm-zip](https://www.npmjs.com/package/adm-zip) | `^0.5.16` | Extração de binários compactados no setup inicial |
 | **Test Runner** | Node.js Test Runner (`node:test`) | Nativo | Execução rápida de testes unitários sem dependências externas |
-| **Empacotador** | [electron-builder](https://www.electron.build/) | `^25.1.8` | Geração de instaladores (NSIS no Windows, DMG, AppImage) |
+| **Empacotador** | [electron-builder](https://www.electron.build/) | `^25.1.8` | Geração de instaladores (NSIS no Windows) |
 
 ---
 

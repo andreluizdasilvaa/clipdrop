@@ -20,12 +20,6 @@
     "nsis": {
       "installerIcon": "src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico",
       "uninstallerIcon": "src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico"
-    },
-    "mac": {
-      "icon": "src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico"
-    },
-    "linux": {
-      "icon": "src/renderer/assets/logos/icon/logo_sem_fundo_sem_texto.ico"
     }
   },
   "dependencies": {

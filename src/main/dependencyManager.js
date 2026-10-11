@@ -8,34 +8,32 @@ const { getUserDataDir } = require('./utils/pathUtils');
 class DependencyManager {
   constructor() {
     this.isWin = process.platform === 'win32';
-    this.isMac = process.platform === 'darwin';
-    this.isLinux = process.platform === 'linux';
 
     // Armazenamento isolado de binários em userData/bin (sem exigir admin)
     this.binDir = path.join(getUserDataDir(), 'bin');
 
     this.binaries = {
       ytdlp: {
-        name: this.isWin ? 'yt-dlp.exe' : 'yt-dlp',
+        name: 'yt-dlp.exe',
         label: 'Motor de download (yt-dlp)',
         resolvedPath: null,
         status: 'checking'
       },
       ffmpeg: {
-        name: this.isWin ? 'ffmpeg.exe' : 'ffmpeg',
+        name: 'ffmpeg.exe',
         label: 'Conversor de mídia (ffmpeg)',
         resolvedPath: null,
         status: 'checking'
       },
       ffprobe: {
-        name: this.isWin ? 'ffprobe.exe' : 'ffprobe',
+        name: 'ffprobe.exe',
         label: 'Analisador de mídia (ffprobe)',
         resolvedPath: null,
         status: 'checking'
       },
       // Opcional: runtime JavaScript exigido pelo yt-dlp para o YouTube
       deno: {
-        name: this.isWin ? 'deno.exe' : 'deno',
+        name: 'deno.exe',
         label: 'Runtime JavaScript (deno)',
         optional: true,
         resolvedPath: null,
@@ -51,38 +49,23 @@ class DependencyManager {
   }
 
   getBinaryUrls() {
-    let ytdlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
-    if (this.isWin) {
-      ytdlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
-    } else if (this.isMac) {
-      ytdlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
-    }
-
-    let ffmpegUrl = '';
-    let ffprobeUrl = '';
-
-    if (this.isWin) {
-      ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-win-64.zip';
-      ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-win-64.zip';
-    } else if (this.isMac) {
-      ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-osx-64.zip';
-      ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-osx-64.zip';
-    } else {
-      ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-linux-64.zip';
-      ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-linux-64.zip';
-    }
-
-    const denoTarget = this.isWin
-      ? 'x86_64-pc-windows-msvc'
-      : this.isMac
-        ? (process.arch === 'arm64' ? 'aarch64-apple-darwin' : 'x86_64-apple-darwin')
-        : (process.arch === 'arm64' ? 'aarch64-unknown-linux-gnu' : 'x86_64-unknown-linux-gnu');
-
     return {
-      ytdlp: { url: ytdlpUrl, isZip: false },
-      ffmpeg: { url: ffmpegUrl, isZip: true },
-      ffprobe: { url: ffprobeUrl, isZip: true },
-      deno: { url: `https://github.com/denoland/deno/releases/latest/download/deno-${denoTarget}.zip`, isZip: true }
+      ytdlp: {
+        url: 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe',
+        isZip: false
+      },
+      ffmpeg: {
+        url: 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-win-64.zip',
+        isZip: true
+      },
+      ffprobe: {
+        url: 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-win-64.zip',
+        isZip: true
+      },
+      deno: {
+        url: 'https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip',
+        isZip: true
+      }
     };
   }
 
@@ -101,7 +84,7 @@ class DependencyManager {
     } catch (_) {}
 
     try {
-      const cmd = this.isWin ? `where.exe ${binName}` : `which ${binName}`;
+      const cmd = `where.exe ${binName}`;
       const stdout = execSync(cmd, {
         stdio: ['pipe', 'pipe', 'ignore'],
         encoding: 'utf-8',
@@ -190,16 +173,6 @@ class DependencyManager {
     }
   }
 
-  applyUnixPermissions(filePath) {
-    if (!this.isWin && fs.existsSync(filePath)) {
-      try {
-        fs.chmodSync(filePath, 0o755);
-      } catch (err) {
-        console.warn(`[dependencyManager] Falha ao aplicar chmod 755 em ${filePath}:`, err.message);
-      }
-    }
-  }
-
   async updateYtDlpInBackground() {
     const ytdlpPath = this.binaries.ytdlp.resolvedPath;
     if (!ytdlpPath || !fs.existsSync(ytdlpPath)) return;
@@ -252,7 +225,6 @@ class DependencyManager {
       }
 
       if (foundPath) {
-        this.applyUnixPermissions(foundPath);
         updateUI(key, {
           status: 'ready',
           resolvedPath: foundPath,
@@ -282,8 +254,6 @@ class DependencyManager {
           } catch (_) {}
 
           const localPath = path.join(this.binDir, binMeta.name);
-          this.applyUnixPermissions(localPath);
-
           updateUI(key, {
             status: 'ready',
             resolvedPath: localPath,
@@ -293,9 +263,6 @@ class DependencyManager {
           // Arquivo executável direto (ex: yt-dlp standalone)
           const targetPath = path.join(this.binDir, binMeta.name);
           await this.downloadWithProgress(info.url, targetPath, onProgress);
-
-          this.applyUnixPermissions(targetPath);
-
           updateUI(key, {
             status: 'ready',
             resolvedPath: targetPath,

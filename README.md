@@ -10,14 +10,14 @@
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white" alt="Node.js" /></a>
   <a href="https://www.electronjs.org/"><img src="https://img.shields.io/badge/Electron-33.2.0-47848F?logo=electron&logoColor=white" alt="Electron" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" /></a>
-  <a href="https://github.com/"><img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey" alt="Platform" /></a>
+  <a href="https://github.com/"><img src="https://img.shields.io/badge/Platform-Windows-lightgrey" alt="Platform" /></a>
 </p>
 
 ---
 
 ## 1. Visão Geral (Overview)
 
-O **ClipDrop** é uma aplicação desktop multiplataforma construída sobre o ecossistema Electron. Seu objetivo principal é fornecer uma experiência de usuário visualmente rica, simples e rápida para extração e processamento de mídias da internet, eliminando a barreira de uso de ferramentas de linha de comando como `yt-dlp` e `ffmpeg`.
+O **ClipDrop** é uma aplicação desktop para Windows construída sobre o ecossistema Electron. Seu objetivo principal é fornecer uma experiência de usuário visualmente rica, simples e rápida para extração e processamento de mídias da internet, eliminando a barreira de uso de ferramentas de linha de comando como `yt-dlp` e `ffmpeg`.
 
 ### O Problema que Resolve
 Ferramentas baseadas em terminal como o `yt-dlp` oferecem poder extremo e suporte a mais de 1.800 plataformas, porém exigem conhecimento de parâmetros de linha de comando, configuração manual de binários no `$PATH`, resolução de conflitos de codecs e gestão manual de dependências. O ClipDrop abstrai toda essa complexidade em um fluxo "Zero-Config" com interface gráfica reativa e intuitiva.
@@ -243,19 +243,13 @@ O empacotamento é configurado via [electron-builder.yml](file:///c:/Users/man0b
   ```
   Empacota os arquivos na pasta `release/win-unpacked/` (ou equivalente no SO) sem criar o instalador NSIS.
 
-### Configurações por Plataforma
+### Configurações da Plataforma
 
 - **Windows:**
   - Formato: Instalador assistido **NSIS** (`.exe`).
   - Arquitetura: `x64`.
   - Nome do arquivo: `ClipDrop-Setup-<versao>.exe`.
   - Permite ao usuário escolher o diretório de destino na instalação.
-- **macOS:**
-  - Formato: Imagem de disco Apple (`.dmg`).
-  - Categoria: `public.app-category.utilities`.
-- **Linux:**
-  - Formato: Pacote universal portátil (`.AppImage`).
-  - Categoria: `AudioVideo`.
 
 ---
 
